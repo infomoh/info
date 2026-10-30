@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>C++ مقابل C#</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: one white column with a sticky progress nav. C++ is blue, C# is purple everywhere; motion shows the real mechanism (compile pipeline, diverging bars). */
+  :root {
+    --bg: #ffffff;
+    --ink: #14181f;
+    --muted: #586170;
+    --line: #e4e8ee;
+    --soft: #f5f7fa;
+    --cpp: #00599c;
+    --cpp-rgb: 0, 89, 156;
+    --cpp-soft: #e8f1f9;
+    --cs: #68217a;
+    --cs-rgb: 104, 33, 122;
+    --cs-soft: #f3e9f6;
+    --font-display: "Readex Pro", "IBM Plex Sans Arabic", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans Arabic", system-ui, sans-serif;
+    --font-code: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+    --ease: cubic-bezier(.2, .7, .2, 1);
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { direction: rtl; scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.75;
+    padding-block: 0 64px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 40; }
+  .wrap { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 72px; }
+  h1, h2, h3 { font-family: var(--font-display); line-height: 1.3; margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+  .cpp { color: var(--cpp); }
+  .cs { color: var(--cs); }
+  section[id] { scroll-margin-top: 76px; }
+
+  /* Sticky nav with scroll progress */
+  .nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: rgba(255,255,255,.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 20px; padding-block: 10px; }
+  .mark { font-family: var(--font-code); font-weight: 500; font-size: 14px; direction: ltr; white-space: nowrap; }
+  .nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+  .nav ul::-webkit-scrollbar { display: none; }
+  .nav a { display: block; white-space: nowrap; font-size: 14px; color: var(--muted); text-decoration: none; padding: 4px 12px; border-radius: 999px; transition: background .2s, color .2s; }
+  .nav a:hover { background: var(--soft); color: var(--ink); }
+  .nav a[aria-current="true"] { background: var(--ink); color: #fff; }
+  .nav a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .progress { position: absolute; inset-inline: 0; bottom: -1px; height: 2px; background: linear-gradient(to left, var(--cpp), var(--cs)); transform-origin: right; transform: scaleX(0); }
+
+  /* Hero */
+  .hero { position: relative; display: flex; flex-direction: column; gap: 22px; padding-block: 56px 8px; isolation: isolate; }
+  .hero::before { content: ""; position: absolute; inset: -40px -24px 0; z-index: -2; background-image: radial-gradient(#d5dbe5 1.2px, transparent 1.2px); background-size: 24px 24px; -webkit-mask-image: radial-gradient(ellipse 70% 80% at 50% 40%, #000 20%, transparent 75%); mask-image: radial-gradient(ellipse 70% 80% at 50% 40%, #000 20%, transparent 75%); }
+  .blob { position: absolute; z-index: -1; width: 320px; height: 320px; border-radius: 50%; filter: blur(70px); opacity: .22; pointer-events: none; }
+  .blob.b1 { background: var(--cpp); top: -60px; right: -80px; animation: drift1 14s ease-in-out infinite alternate; }
+  .blob.b2 { background: var(--cs); top: 20px; left: -80px; animation: drift2 16s ease-in-out infinite alternate; }
+  @keyframes drift1 { to { transform: translate(-60px, 50px) scale(1.15); } }
+  @keyframes drift2 { to { transform: translate(70px, 30px) scale(1.1); } }
+  .kicker { font-family: var(--font-code); font-size: 13px; letter-spacing: .08em; color: var(--muted); direction: ltr; text-align: right; }
+  h1 { font-size: clamp(44px, 10vw, 88px); font-weight: 700; letter-spacing: -.02em; display: flex; align-items: baseline; gap: .25em; flex-wrap: wrap; }
+  h1 .vs { color: var(--muted); font-weight: 500; font-size: .36em; }
+  h1 span.l { display: inline-block; animation: rise .9s var(--ease) both; }
+  h1 .vs { animation: rise .9s var(--ease) .12s both; }
+  h1 span.l2 { animation-delay: .24s; }
+  @keyframes rise { from { transform: translateY(26px); } to { transform: none; } }
+  .lead { font-size: 18px; color: var(--muted); max-width: 60ch; }
+  .term { direction: ltr; text-align: left; align-self: flex-start; font-family: var(--font-code); font-size: 14px; background: var(--ink); color: #e9edf3; border-radius: 8px; padding: 12px 16px; min-height: 46px; max-width: 100%; display: flex; gap: 10px; align-items: center; overflow: hidden; }
+  .term .pr { color: #7b8494; }
+  .term .tx { white-space: pre; overflow: hidden; text-overflow: clip; min-width: 0; }
+  .term .tx.cpp { color: #7fc0f2; }
+  .term .tx.cs { color: #d9a8e6; }
+  .caret { width: 8px; height: 17px; background: #e9edf3; flex: none; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { font: inherit; font-size: 15px; font-weight: 600; text-decoration: none; padding: 10px 22px; border-radius: 8px; border: 1px solid var(--ink); transition: transform .2s var(--ease), box-shadow .2s var(--ease), background .2s; cursor: pointer; display: inline-block; }
+  .btn.p { background: var(--ink); color: #fff; }
+  .btn.s { background: var(--bg); color: var(--ink); }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20,24,31,.14); }
+  .btn.s:hover { background: var(--soft); }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  /* Language cards */
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .lang { position: relative; border: 1px solid var(--line); border-top: 3px solid var(--line); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; overflow: hidden; transition: transform .3s var(--ease), box-shadow .3s var(--ease); }
+  .lang::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(var(--g), .10), transparent 70%); }
+  .lang:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(var(--g), .14); }
+  .lang:hover::after { opacity: 1; }
+  .lang.cpp-l { border-top-color: var(--cpp); --g: var(--cpp-rgb); }
+  .lang.cs-l { border-top-color: var(--cs); --g: var(--cs-rgb); }
+  .lang h2 { font-size: 30px; direction: ltr; text-align: right; }
+  .age { display: flex; align-items: baseline; gap: 8px; }
+  .age b { font-family: var(--font-display); font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .age span { color: var(--muted); font-size: 14px; }
+  .cpp-l .age b { color: var(--cpp); }
+  .cs-l .age b { color: var(--cs); }
+  .facts { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { font-size: 13px; padding: 2px 10px; border-radius: 999px; background: var(--soft); color: var(--muted); }
+  .cpp-l .chip { background: var(--cpp-soft); color: var(--cpp); }
+  .cs-l .chip { background: var(--cs-soft); color: var(--cs); }
+
+  /* Section scaffolding */
+  .sec { display: flex; flex-direction: column; gap: 22px; }
+  .sec > h2 { font-size: 28px; }
+  .sec > .sub { color: var(--muted); max-width: 62ch; margin-top: -10px; }
+  .reveal { transition: transform .8s var(--ease); }
+  .reveal.arm { transform: translateY(32px); }
+  .reveal.arm.in { transform: none; }
+
+  /* Pipeline */
+  .lane { display: flex; flex-direction: column; gap: 10px; }
+  .lane + .lane { margin-top: 18px; }
+  .lane-t { font-family: var(--font-code); font-weight: 500; font-size: 13px; direction: ltr; text-align: right; }
+  .flow { direction: ltr; display: flex; align-items: center; }
+  .node { flex: 0 1 auto; min-width: 0; text-align: center; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; background: var(--bg); transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s; }
+  .node b { display: block; font-family: var(--font-code); font-weight: 500; font-size: 13px; }
+  .node small { display: block; font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 2px; }
+  .lane.cpp-lane .node:hover { border-color: var(--cpp); box-shadow: 0 8px 22px rgba(var(--cpp-rgb), .16); transform: translateY(-3px); }
+  .lane.cs-lane .node:hover { border-color: var(--cs); box-shadow: 0 8px 22px rgba(var(--cs-rgb), .16); transform: translateY(-3px); }
+  .lane.cpp-lane .node.hot { background: var(--cpp-soft); border-color: var(--cpp); }
+  .lane.cs-lane .node.hot { background: var(--cs-soft); border-color: var(--cs); }
+  .lane.cpp-lane .node b.k { color: var(--cpp); }
+  .lane.cs-lane .node b.k { color: var(--cs); }
+  .link { flex: 1 1 24px; min-width: 20px; height: 2px; background-size: 12px 2px; animation: dashx .9s linear infinite; }
+  .cpp-lane .link { background-image: repeating-linear-gradient(90deg, var(--cpp) 0 6px, transparent 6px 12px); }
+  .cs-lane .link { background-image: repeating-linear-gradient(90deg, var(--cs) 0 6px, transparent 6px 12px); }
+  @keyframes dashx { to { background-position: 12px 0; } }
+  @keyframes dashy { to { background-position: 0 12px; } }
+
+  /* Comparison grid */
+  .cmp { border-top: 1px solid var(--ink); }
+  .row { display: grid; grid-template-columns: 150px 1fr 1fr; gap: 24px; padding: 16px 12px; border-bottom: 1px solid var(--line); transition: background .2s; }
+  .row > * { min-width: 0; }
+  .row:not(.head):hover { background: var(--soft); }
+  .row:not(.head):hover .label { color: var(--ink); }
+  .row.head { padding-block: 12px; background: var(--soft); }
+  .row.head div { font-family: var(--font-code); font-weight: 500; direction: ltr; text-align: right; }
+  .label { font-weight: 600; font-size: 15px; }
+  .cell { font-size: 15px; }
+  .cell small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .tag { display: inline-block; font-size: 12px; padding: 0 8px; border-radius: 4px; font-weight: 600; margin-inline-start: 6px; vertical-align: 1px; }
+  .tag.good { background: #e3f4e8; color: #17653a; }
+  .tag.mid { background: #fdf2d9; color: #7a5200; }
+
+  /* Balance chart */
+  .legend { display: grid; grid-template-columns: 1fr 150px 1fr; gap: 12px; font-family: var(--font-code); font-weight: 500; direction: rtl; }
+  .legend .cpp { text-align: right; }
+  .legend .cs { text-align: left; }
+  .chart { display: flex; flex-direction: column; gap: 14px; }
+  .brow { display: grid; grid-template-columns: 1fr 150px 1fr; gap: 12px; align-items: center; direction: rtl; }
+  .blabel { text-align: center; font-size: 14px; font-weight: 500; line-height: 1.4; }
+  .side { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .side .v { font-family: var(--font-code); font-size: 12px; width: 28px; flex: none; font-variant-numeric: tabular-nums; }
+  .side.c .v { text-align: right; color: var(--cpp); }
+  .side.s .v { text-align: left; color: var(--cs); }
+  .track { position: relative; flex: 1; height: 14px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+  .fill { position: absolute; top: 0; bottom: 0; transition: transform 1s var(--ease) var(--d, 0s); }
+  .side.c .fill { left: 0; background: var(--cpp); transform-origin: left; border-radius: 0 3px 3px 0; }
+  .side.s .fill { right: 0; background: var(--cs); transform-origin: right; border-radius: 3px 0 0 3px; }
+  .chart.arm .fill { transform: scaleX(0); }
+  .chart.arm.in .fill { transform: scaleX(1); }
+  .brow:hover .blabel { color: var(--ink); }
+  .brow:hover .fill { filter: brightness(1.15); }
+  .note { font-size: 14px; color: var(--muted); max-width: 70ch; }
+
+  /* Code */
+  .codes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .codebox { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .codebox .cap { font-family: var(--font-code); font-size: 13px; font-weight: 500; direction: ltr; text-align: right; }
+  .pw { position: relative; }
+  pre { margin: 0; direction: ltr; text-align: left; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 16px; padding-top: 40px; overflow-x: auto; font-family: var(--font-code); font-size: 13px; line-height: 1.65; max-width: 100%; transition: border-color .2s, box-shadow .2s; }
+  .pw:hover pre { border-color: #c9d0db; box-shadow: 0 8px 24px rgba(20,24,31,.07); }
+  .pw .dots { position: absolute; top: 14px; left: 16px; display: flex; gap: 6px; direction: ltr; }
+  .pw .dots i { width: 9px; height: 9px; border-radius: 50%; background: #d5dbe5; display: block; }
+  .copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 12px; padding: 2px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 5px; cursor: pointer; transition: background .2s, color .2s; }
+  .copy:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .copy:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .kw { color: #8a3b00; }
+  .ty { color: #00599c; }
+  .st { color: #17653a; }
+  .cm { color: #7b8494; }
+
+  /* Chooser */
+  .choose { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 24px; align-items: start; }
+  .opts { display: flex; flex-direction: column; gap: 8px; }
+  .opt { font: inherit; font-size: 15px; text-align: right; padding: 10px 14px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; cursor: pointer; transition: transform .2s var(--ease), background .2s, border-color .2s; }
+  .opt:hover { background: var(--soft); transform: translateX(-4px); }
+  .opt:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .opt[aria-pressed="true"] { border-color: var(--ink); background: var(--soft); font-weight: 600; }
+  .verdict { position: relative; border: 1px solid var(--line); border-top: 3px solid var(--ink); border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 14px; min-height: 250px; overflow: hidden; transition: border-top-color .3s; }
+  .verdict.is-cpp { border-top-color: var(--cpp); }
+  .verdict.is-cs { border-top-color: var(--cs); }
+  .verdict .in-anim { animation: fadeup .45s var(--ease) both; }
+  @keyframes fadeup { from { transform: translateY(10px); opacity: .0; } to { transform: none; opacity: 1; } }
+  .verdict h3 { font-size: 32px; direction: ltr; text-align: right; }
+  .bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--soft); direction: ltr; }
+  .bar i { display: block; height: 100%; transition: width .6s var(--ease); }
+  .bar .b-cpp { background: var(--cpp); }
+  .bar .b-cs { background: var(--cs); }
+  .scale { display: flex; justify-content: space-between; font-family: var(--font-code); font-size: 12px; direction: ltr; }
+
+  .foot { border-top: 1px solid var(--line); padding-top: 20px; color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 820px) {
+    .flow { flex-direction: column; align-items: stretch; }
+    .node { flex: none; }
+    .link { flex: none; width: 2px; height: 26px; min-width: 0; align-self: center; background-size: 2px 12px; animation-name: dashy; }
+    .cpp-lane .link { background-image: repeating-linear-gradient(180deg, var(--cpp) 0 6px, transparent 6px 12px); }
+    .cs-lane .link { background-image: repeating-linear-gradient(180deg, var(--cs) 0 6px, transparent 6px 12px); }
+  }
+  @media (max-width: 720px) {
+    .wrap { gap: 56px; }
+    .mark { display: none; }
+    .hero { padding-block: 36px 0; }
+    .pair, .codes, .choose { grid-template-columns: 1fr; }
+    .row { grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+    .row .label { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+    .row.head .label { display: none; }
+    .legend, .brow { grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+    .legend { display: none; }
+    .brow .blabel { grid-column: 1 / -1; order: -1; }
+    .term { font-size: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+
+</head>
+<body>
+<main class="wrap">
+  <nav class="nav" aria-label="أقسام الصفحة">
+    <div class="mark"><span class="cpp">C++</span> / <span class="cs">C#</span></div>
+    <ul>
+      <li><a href="#run">التنفيذ</a></li>
+      <li><a href="#compare">المقارنة</a></li>
+      <li><a href="#balance">ميزان القوى</a></li>
+      <li><a href="#code">الكود</a></li>
+      <li><a href="#pick">اختر</a></li>
+    </ul>
+    <div class="progress" id="progress"></div>
+  </nav>
+
+  <header class="hero">
+    <div class="blob b1"></div><div class="blob b2"></div>
+    <div class="kicker">COMPARE / 2 LANGUAGES</div>
+    <h1><span class="l l1 cpp">C++</span><span class="vs">مقابل</span><span class="l l2 cs">C#</span></h1>
+    <p class="lead">الاثنين من عائلة C، والاثنين يخدمو برمجة كائنية. الفرق الحقيقي في كيفاش يتنفذ الكود، وشكون يسيّر الذاكرة، وفين تستعملهم.</p>
+    <div class="term" dir="ltr" aria-hidden="true"><span class="pr">$</span><span class="tx" id="typed"></span><span class="caret"></span></div>
+    <div class="ctas">
+      <a class="btn p" href="#compare">ابدأ المقارنة</a>
+      <a class="btn s" href="#pick">ساعدني نختار</a>
+    </div>
+  </header>
+
+  <section class="pair" aria-label="تعريف باللغتين">
+    <article class="lang cpp-l glow">
+      <h2>C++</h2>
+      <div class="age"><b data-year="1985">41</b><span>سنة في الميدان</span></div>
+      <div class="facts"><span class="chip">Bjarne Stroustrup</span><span class="chip">1985</span><span class="chip">ISO standard</span></div>
+      <p>لغة مترجمة مباشرة إلى كود الجهاز. تعطيك تحكم كامل في الذاكرة والعتاد، وفي المقابل أنت المسؤول على كل شيء.</p>
+    </article>
+    <article class="lang cs-l glow">
+      <h2>C#</h2>
+      <div class="age"><b data-year="2002">24</b><span>سنة في الميدان</span></div>
+      <div class="facts"><span class="chip">Anders Hejlsberg</span><span class="chip">Microsoft</span><span class="chip">2002</span></div>
+      <p>لغة حديثة تخدم فوق منصة .NET. فيها garbage collector ومكتبات جاهزة كثيرة، تكتب بسرعة وتخطأ أقل.</p>
+    </article>
+  </section>
+
+  <section class="sec reveal" id="run" aria-labelledby="t-run">
+    <h2 id="t-run">كيفاش يتنفذ الكود</h2>
+    <p class="sub">هذا أهم فرق. مرّر الماوس على أي مرحلة.</p>
+    <div>
+      <div class="lane cpp-lane">
+        <div class="lane-t cpp">C++</div>
+        <div class="flow">
+          <div class="node"><b>main.cpp</b><small>الكود المصدري</small></div>
+          <div class="link"></div>
+          <div class="node"><b class="k">Compiler</b><small>g++ / clang / MSVC</small></div>
+          <div class="link"></div>
+          <div class="node hot"><b class="k">Machine code</b><small>ملف تنفيذي لكل منصة</small></div>
+          <div class="link"></div>
+          <div class="node"><b>CPU</b><small>يتنفذ مباشرة</small></div>
+        </div>
+      </div>
+      <div class="lane cs-lane">
+        <div class="lane-t cs">C#</div>
+        <div class="flow">
+          <div class="node"><b>Program.cs</b><small>الكود المصدري</small></div>
+          <div class="link"></div>
+          <div class="node"><b class="k">Roslyn</b><small>مترجم C#</small></div>
+          <div class="link"></div>
+          <div class="node hot"><b class="k">IL (.dll)</b><small>لغة وسيطة موحدة</small></div>
+          <div class="link"></div>
+          <div class="node"><b class="k">CLR + JIT</b><small>يترجم وقت التشغيل</small></div>
+          <div class="link"></div>
+          <div class="node"><b>CPU</b><small>يتنفذ</small></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">C# تقدر كذلك تتترجم native مسبقاً بـ Native AOT، لكن الطريقة المعتادة هي IL مع JIT.</p>
+  </section>
+
+  <section class="sec reveal" id="compare" aria-labelledby="t-cmp">
+    <h2 id="t-cmp">الفروقات وجهاً لوجه</h2>
+    <p class="sub">كل سطر يقارن نقطة وحدة بين اللغتين.</p>
+    <div class="cmp">
+      <div class="row head" aria-hidden="true"><div class="label"></div><div class="cpp">C++</div><div class="cs">C#</div></div>
+
+      <div class="row"><div class="label">طريقة التنفيذ</div>
+        <div class="cell">يتترجم مباشرة إلى كود الجهاز (native)<small>ملف تنفيذي مستقل لكل منصة</small></div>
+        <div class="cell">يتترجم إلى IL ثم JIT يحولو وقت التشغيل على CLR<small>يحتاج runtime تاع .NET</small></div></div>
+
+      <div class="row"><div class="label">إدارة الذاكرة</div>
+        <div class="cell">يدوية: <code dir="ltr">new/delete</code> أو smart pointers (RAII)<small>تحكم دقيق، وخطر تسريب أو crash</small></div>
+        <div class="cell">أوتوماتيكية بـ garbage collector<small>أمان أكثر، وتوقفات صغيرة محتملة</small></div></div>
+
+      <div class="row"><div class="label">المؤشرات (Pointers)</div>
+        <div class="cell">أساسية في اللغة، مع حساب العناوين</div>
+        <div class="cell">ممكنة فقط داخل <code dir="ltr">unsafe</code>، وغالباً ما تحتاجهاش</div></div>
+
+      <div class="row"><div class="label">السرعة</div>
+        <div class="cell">الأعلى عموماً <span class="tag good">ممتاز</span><small>زمن الاستجابة متوقع بدقة</small></div>
+        <div class="cell">قريب جداً في أغلب التطبيقات <span class="tag good">جيد جداً</span><small>JIT و AOT حسنو الأداء بزاف</small></div></div>
+
+      <div class="row"><div class="label">منحنى التعلم</div>
+        <div class="cell">صعب: قوالب (templates)، ذاكرة، undefined behavior <span class="tag mid">متوسط إلى صعب</span></div>
+        <div class="cell">أسهل وأوضح، وأدوات التطوير تساعدك بزاف <span class="tag good">سهل نسبياً</span></div></div>
+
+      <div class="row"><div class="label">المنصات</div>
+        <div class="cell">كل شيء تقريباً: ويندوز، لينوكس، ماك، متحكمات صغيرة</div>
+        <div class="cell">ويندوز، لينوكس، ماك عبر .NET، وكذلك الموبايل (MAUI)</div></div>
+
+      <div class="row"><div class="label">المكتبات والأدوات</div>
+        <div class="cell">STL وBoost وQt، وأدوات البناء CMake</div>
+        <div class="cell">مكتبة .NET كبيرة جداً وNuGet، مع Visual Studio وRider</div></div>
+
+      <div class="row"><div class="label">وقت البناء</div>
+        <div class="cell">أبطأ في المشاريع الكبيرة (headers، templates)</div>
+        <div class="cell">أسرع، وإعادة التحميل أسهل أثناء التطوير</div></div>
+
+      <div class="row"><div class="label">الاستعمال المعتاد</div>
+        <div class="cell">محركات الألعاب، أنظمة التشغيل، embedded، برامج عالية الأداء</div>
+        <div class="cell">ويب وAPI، تطبيقات ويندوز، ألعاب Unity، أدوات الشركات</div></div>
+    </div>
+  </section>
+
+  <section class="sec reveal" id="balance" aria-labelledby="t-bal">
+    <h2 id="t-bal">ميزان القوى</h2>
+    <p class="sub">كل شريط يمثل تقديراً عاماً من 100. الأطول يعني الأقوى في هذه النقطة.</p>
+    <div class="legend" aria-hidden="true"><div class="cpp">C++</div><div></div><div class="cs">C#</div></div>
+    <div class="chart" id="chart"></div>
+    <p class="note">هذه تقديرات عامة للمقارنة وماشي قياس علمي. النتيجة الفعلية تتغير حسب المشروع والفريق.</p>
+  </section>
+
+  <section class="sec reveal" id="code" aria-labelledby="t-code">
+    <h2 id="t-code">نفس الفكرة بالكود</h2>
+    <p class="sub">كلاس صغير ونداء دالة. في C++ نحن نقرر عمر الكائن، وفي C# الـ runtime يتكفل بالتنظيف.</p>
+    <div class="codes">
+      <div class="codebox">
+        <div class="cap cpp">C++</div>
+        <div class="pw"><div class="dots"><i></i><i></i><i></i></div><button class="copy" type="button" id="copy-cpp">نسخ</button>
+<pre id="code-cpp"><code><span class="kw">#include</span> <span class="st">&lt;iostream&gt;</span>
+<span class="kw">#include</span> <span class="st">&lt;memory&gt;</span>
+<span class="kw">#include</span> <span class="st">&lt;string&gt;</span>
+
+<span class="kw">class</span> <span class="ty">Player</span> {
+  std::<span class="ty">string</span> name;
+<span class="kw">public</span>:
+  <span class="ty">Player</span>(std::<span class="ty">string</span> n) : name(n) {}
+  <span class="kw">void</span> greet() {
+    std::cout &lt;&lt; <span class="st">"Salam "</span> &lt;&lt; name &lt;&lt; <span class="st">"\n"</span>;
+  }
+};
+
+<span class="kw">int</span> main() {
+  <span class="cm">// smart pointer يحذف الكائن وحده</span>
+  <span class="kw">auto</span> p = std::make_unique&lt;<span class="ty">Player</span>&gt;(<span class="st">"Ali"</span>);
+  p-&gt;greet();
+}</code></pre></div>
+      </div>
+      <div class="codebox">
+        <div class="cap cs">C#</div>
+        <div class="pw"><div class="dots"><i></i><i></i><i></i></div><button class="copy" type="button" id="copy-cs">نسخ</button>
+<pre id="code-cs"><code><span class="kw">class</span> <span class="ty">Player</span>(<span class="kw">string</span> name)
+{
+  <span class="kw">public void</span> Greet() =&gt;
+    Console.WriteLine(<span class="st">$"Salam {name}"</span>);
+}
+
+<span class="cm">// GC يمسح الكائن لما ما يبقاش مستعمل</span>
+<span class="kw">var</span> p = <span class="kw">new</span> <span class="ty">Player</span>(<span class="st">"Ali"</span>);
+p.Greet();</code></pre></div>
+      </div>
+    </div>
+    <p class="note">C# أقصر لأن الـ runtime والمكتبة يعملو بدالك الكثير. C++ أطول لكن تشوف بالضبط شنو يصير في الذاكرة.</p>
+  </section>
+
+  <section class="sec reveal" id="pick" aria-labelledby="t-pick">
+    <h2 id="t-pick">أنهي وحدة تختار؟</h2>
+    <p class="sub">اختر هدفك وشوف شنو تنصحك الصفحة.</p>
+    <div class="choose">
+      <div class="opts" id="opts" role="group" aria-label="الهدف"></div>
+      <div class="verdict" id="verdict" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>اللغتين تخدمو مع بعض في مشاريع كثيرة: محرك بـ C++ وأدوات بـ C#.</p>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var RM = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---- Typed terminal line ---- */
+  var typedEl = document.getElementById("typed");
+  var LINES = [
+    { c: "cpp", t: "g++ main.cpp -O2  ->  native machine code" },
+    { c: "cs", t: "dotnet build  ->  IL + JIT at runtime" }
+  ];
+  if (RM) {
+    typedEl.className = "tx " + LINES[0].c;
+    typedEl.textContent = LINES[0].t;
+  } else {
+    var li = 0, ci = 0, del = false;
+    typedEl.className = "tx " + LINES[0].c;
+    (function tick() {
+      var L = LINES[li];
+      if (!del) {
+        ci++;
+        typedEl.textContent = L.t.slice(0, ci);
+        if (ci >= L.t.length) { del = true; return void setTimeout(tick, 1900); }
+        setTimeout(tick, 45);
+      } else {
+        ci -= 2; if (ci < 0) ci = 0;
+        typedEl.textContent = L.t.slice(0, ci);
+        if (ci <= 0) { del = false; li = (li + 1) % LINES.length; typedEl.className = "tx " + LINES[li].c; setTimeout(tick, 350); }
+        else setTimeout(tick, 18);
+      }
+    })();
+  }
+
+  /* ---- Years count-up ---- */
+  var now = new Date().getFullYear();
+  document.querySelectorAll("[data-year]").forEach(function (el) {
+    var target = now - parseInt(el.getAttribute("data-year"), 10);
+    el.textContent = target;
+    if (RM) return;
+    var start = null, dur = 1100;
+    function step(ts) {
+      if (start === null) start = ts;
+      var p = Math.min(1, (ts - start) / dur);
+      var e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * e);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    el.textContent = 0;
+    requestAnimationFrame(step);
+  });
+
+  /* ---- Balance chart ---- */
+  var METRICS = [
+    ["السرعة الخام", 95, 85],
+    ["التحكم في الذاكرة", 98, 55],
+    ["سرعة التطوير", 55, 90],
+    ["سهولة التعلم", 40, 80],
+    ["مكتبات وأدوات جاهزة", 70, 92],
+    ["الأجهزة الصغيرة (embedded)", 95, 35]
+  ];
+  var chart = document.getElementById("chart");
+  METRICS.forEach(function (m, i) {
+    var row = document.createElement("div");
+    row.className = "brow";
+    row.setAttribute("role", "img");
+    row.setAttribute("aria-label", m[0] + ": C++ " + m[1] + "، C# " + m[2]);
+    row.innerHTML =
+      '<div class="side c"><span class="v">' + m[1] + '</span><div class="track"><div class="fill" style="width:' + m[1] + '%;--d:' + (i * 0.08).toFixed(2) + 's"></div></div></div>' +
+      '<div class="blabel">' + m[0] + '</div>' +
+      '<div class="side s"><div class="track"><div class="fill" style="width:' + m[2] + '%;--d:' + (i * 0.08).toFixed(2) + 's"></div></div><span class="v">' + m[2] + '</span></div>';
+    chart.appendChild(row);
+  });
+
+  /* ---- Reveal on scroll (translate only, content stays visible) ---- */
+  var vh = window.innerHeight || 800;
+  var targets = [].slice.call(document.querySelectorAll(".reveal")).concat([chart]);
+  if ("IntersectionObserver" in window && !RM) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.12 });
+    targets.forEach(function (el) {
+      if (el.getBoundingClientRect().top > vh) { el.classList.add("arm"); io.observe(el); }
+    });
+  }
+
+  /* ---- Nav: progress + active section ---- */
+  var prog = document.getElementById("progress");
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      var p = h > 0 ? Math.min(1, Math.max(0, window.scrollY / h)) : 0;
+      prog.style.transform = "scaleX(" + p + ")";
+      ticking = false;
+    });
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  var links = {};
+  document.querySelectorAll(".nav a").forEach(function (a) { links[a.getAttribute("href").slice(1)] = a; });
+  if ("IntersectionObserver" in window) {
+    var so = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          Object.keys(links).forEach(function (k) { links[k].removeAttribute("aria-current"); });
+          if (links[en.target.id]) links[en.target.id].setAttribute("aria-current", "true");
+        }
+      });
+    }, { rootMargin: "-35% 0px -60% 0px" });
+    Object.keys(links).forEach(function (k) { var s = document.getElementById(k); if (s) so.observe(s); });
+  }
+
+  /* ---- Pointer glow on language cards ---- */
+  document.querySelectorAll(".glow").forEach(function (card) {
+    card.addEventListener("pointermove", function (e) {
+      var r = card.getBoundingClientRect();
+      card.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      card.style.setProperty("--my", (e.clientY - r.top) + "px");
+    });
+  });
+
+  /* ---- Copy buttons ---- */
+  function wireCopy(btnId, preId) {
+    var btn = document.getElementById(btnId), pre = document.getElementById(preId);
+    btn.addEventListener("click", function () {
+      var text = pre.innerText;
+      function done(ok) {
+        btn.textContent = ok ? "تم النسخ" : "حدد وانسخ";
+        setTimeout(function () { btn.textContent = "نسخ"; }, 1600);
+      }
+      function fallback() {
+        try {
+          var r = document.createRange(); r.selectNodeContents(pre);
+          var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        } catch (e) {}
+        done(false);
+      }
+      try {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+      } catch (e) { fallback(); }
+    });
+  }
+  wireCopy("copy-cpp", "code-cpp");
+  wireCopy("copy-cs", "code-cs");
+
+  /* ---- Chooser ---- */
+  var GOALS = [
+    { id: "unreal", label: "ألعاب بمحرك Unreal", cpp: 92, title: "C++", why: "Unreal مبني على C++، وكل الكود الأساسي والـ gameplay المتقدم بيها." },
+    { id: "unity", label: "ألعاب بمحرك Unity", cpp: 8, title: "C#", why: "Unity يستعمل C# للـ scripting، وهي اللغة الأسهل والأسرع للبداية فيه." },
+    { id: "web", label: "موقع ويب وAPI", cpp: 12, title: "C#", why: "ASP.NET Core قوي وسريع ومعاه أدوات جاهزة للمصادقة وقواعد البيانات." },
+    { id: "os", label: "نظام تشغيل أو drivers", cpp: 97, title: "C++", why: "تحتاج وصول مباشر للعتاد وتحكم كامل في الذاكرة بدون runtime." },
+    { id: "embedded", label: "أجهزة embedded وميكروكونترولر", cpp: 94, title: "C++", why: "الموارد قليلة، وC++ يدخل في الأجهزة الصغيرة بدون garbage collector." },
+    { id: "desktop", label: "برنامج ويندوز بواجهة", cpp: 25, title: "C#", why: "WPF وWinForms وMAUI يخلو بناء الواجهات أسرع بكثير." },
+    { id: "hft", label: "برمجة عالية الأداء (تداول، محاكاة)", cpp: 85, title: "C++", why: "كل ميكروثانية تهم، وC++ يعطيك زمن استجابة متوقع بلا توقف تاع GC." },
+    { id: "start", label: "نبدأ البرمجة ونحب نخدم بسرعة", cpp: 30, title: "C#", why: "بدايتها أسهل، والأخطاء أوضح، وتخدم بروجيكات حقيقية بسرعة. C++ تجي من بعد." }
+  ];
+  var optsEl = document.getElementById("opts");
+  var verdictEl = document.getElementById("verdict");
+  var firstShow = true;
+
+  function show(id) {
+    var g = GOALS.filter(function (x) { return x.id === id; })[0];
+    var buttons = optsEl.querySelectorAll("button");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].setAttribute("aria-pressed", buttons[i].dataset.id === id ? "true" : "false");
+    }
+    var cls = g.title === "C++" ? "cpp" : "cs";
+    verdictEl.className = "verdict " + (g.title === "C++" ? "is-cpp" : "is-cs");
+    var anim = firstShow ? "" : " in-anim";
+    verdictEl.innerHTML =
+      '<div class="note' + anim + '">النصيحة</div>' +
+      '<h3 class="' + cls + anim + '">' + g.title + '</h3>' +
+      '<p class="' + anim.trim() + '">' + g.why + '</p>' +
+      '<div class="bar" role="img" aria-label="C++ ' + g.cpp + ' بالمئة، C# ' + (100 - g.cpp) + ' بالمئة">' +
+        '<i class="b-cpp" style="width:' + g.cpp + '%"></i><i class="b-cs" style="width:' + (100 - g.cpp) + '%"></i></div>' +
+      '<div class="scale"><span class="cpp">C++ ' + g.cpp + '%</span><span class="cs">C# ' + (100 - g.cpp) + '%</span></div>';
+    firstShow = false;
+  }
+
+  GOALS.forEach(function (g) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "opt";
+    b.id = "opt-" + g.id;
+    b.dataset.id = g.id;
+    b.textContent = g.label;
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", function () { show(g.id); });
+    optsEl.appendChild(b);
+  });
+  show("unreal");
+})();
+</script>
+</body>
+</html>
